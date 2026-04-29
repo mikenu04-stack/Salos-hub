@@ -1,0 +1,707 @@
+import { useState, useEffect } from "react";
+
+const PK="#E8409A",PU="#8B44C8",GO="#F5C842";
+const BG="#0C0820",CD="#150D2E",BD="#251545";
+const TX="#F0E8FF",MT="#8B7AAA";
+const G=`linear-gradient(135deg,${PK},${PU})`;
+const GT={background:G,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"};
+
+const DEFAULT={
+  kpis:{followers:1000,followerGoal:10000,sales:0,commissions:0,ctr:0,phase:1},
+  team:[
+    {id:"dad",name:"Dad",title:"CEO & Strategy Lead",emoji:"👨‍💼",color:PK,
+     resp:["Oversee business direction & 90-day roadmap","Manage Amazon Associates + track commissions","Create Friday 'Mom Life' content via Claude scripts","Post & schedule all Pinterest content (office niche)","Manage Linktree / bio links across all platforms","Approve products before content rotation","Update Goals tracker every Sunday"]},
+    {id:"son",name:"Son",title:"Chief Content Officer",emoji:"🎬",color:PU,
+     resp:["Create all short-form videos using CapCut AI Video Maker","Post Monday (Office) and Wednesday (Beauty) videos","Post Saturday Amazon Haul videos","Monitor TikTok + Instagram comments — reply within 1 hour","Report posts with 500+ views (Spark Ad candidates)","Repost to YouTube Shorts without TikTok watermark","Update Content Calendar as posts go live"]},
+    {id:"wife",name:"Sandra (Wife)",title:"Chief Product Officer",emoji:"👩‍💼",color:GO,
+     resp:["Research 2 new Amazon products every week via BSR data","Verify Luxury Beauty (10%) vs Standard (6%) classification","Read reviews — write 'why it converts' notes","Find seasonal product opportunities","Maintain the Products database","Deliver product briefing at Sunday 15-min family check-in"]}
+  ],
+  calendar:[
+    {day:"Monday",type:"Office desk setup / tip",niche:"Office",assigned:"Son",status:"pending"},
+    {day:"Wednesday",type:"Skincare demo",niche:"Beauty",assigned:"Son",status:"pending"},
+    {day:"Friday",type:"Mom Life relatable",niche:"Beauty",assigned:"Dad",status:"pending"},
+    {day:"Saturday",type:"Amazon Haul (4 items)",niche:"Both",assigned:"Son",status:"pending"},
+    {day:"Sunday",type:"Family 15-min check-in",niche:"—",assigned:"All",status:"pending"}
+  ],
+  products:[
+    {id:1,name:"Medicube Korean Toner Pads 2.0",cat:"Luxury Beauty",rate:10,price:"$25–$50",status:"active",notes:"#1 Amazon Q1 2026 Beauty"},
+    {id:2,name:"Hero Cosmetics Mighty Patch",cat:"Luxury Beauty",rate:10,price:"$10–$20",status:"active",notes:"#3 Amazon Q1 2026 — Viral before/after"},
+    {id:3,name:"Biodance Bio-Collagen Sheet Masks",cat:"Luxury Beauty",rate:10,price:"$25–$45",status:"active",notes:"#6 Q1 2026 — explosive growth"},
+    {id:4,name:"The Ordinary Niacinamide Serum",cat:"Standard Beauty",rate:6,price:"$8–$18",status:"active",notes:"3 SKUs in Q1 Top 25"},
+    {id:5,name:"CeraVe / La Roche-Posay Moisturizer",cat:"Standard Beauty",rate:6,price:"$15–$30",status:"active",notes:"Derm-recommended — evergreen"},
+    {id:6,name:"Dyson Airwrap / REVLON dupe",cat:"Luxury Beauty",rate:10,price:"$50–$599",status:"active",notes:"$15–60/sale — high ticket"},
+    {id:7,name:"Monitor Stand Riser (OPNICE/WALI)",cat:"Office",rate:4,price:"$25–$55",status:"active",notes:"7.5% conversion — 30K+ orders/mo"},
+    {id:8,name:"Cable Management Clips & Under-Desk Trays",cat:"Office",rate:4,price:"$10–$25",status:"active",notes:"8%+ conversion rate"},
+    {id:9,name:"Ergonomic Laptop Stand (Nulaxy/Boyata)",cat:"Office",rate:4,price:"$25–$55",status:"researching",notes:"Neck/back pain angle"},
+    {id:10,name:"Desk Calendar & Planner 2026–27",cat:"Office",rate:4,price:"$12–$30",status:"researching",notes:"Seasonal spikes Jan + Sep"}
+  ],
+  tasks:[
+    {id:1,text:"Set up Amazon Associates + register all social accounts",assigned:"Dad",priority:"high",done:false},
+    {id:2,text:"Create unique tracking IDs per product (e.g. mightypatch-20)",assigned:"Dad",priority:"high",done:false},
+    {id:3,text:"Set up Linktree/Beacons.ai with all affiliate links organized",assigned:"Dad",priority:"high",done:false},
+    {id:4,text:"Post Monday office video — Week 1 script",assigned:"Son",priority:"high",done:false},
+    {id:5,text:"Post Wednesday beauty video — Week 1 script",assigned:"Son",priority:"high",done:false},
+    {id:6,text:"Post Friday Mom Life video — Week 1 script",assigned:"Dad",priority:"medium",done:false},
+    {id:7,text:"Post Saturday Amazon Haul — Week 1 script",assigned:"Son",priority:"medium",done:false},
+    {id:8,text:"Research 2 new products this week using BSR data",assigned:"Wife",priority:"high",done:false},
+    {id:9,text:"Verify Luxury vs Standard Beauty for all products",assigned:"Wife",priority:"high",done:false},
+    {id:10,text:"Set up CapCut AI Video Maker + test first script",assigned:"Son",priority:"high",done:false},
+    {id:11,text:"Update Goals tracker this Sunday",assigned:"Dad",priority:"medium",done:false},
+    {id:12,text:"Flag any post with 500+ views as Spark Ad candidate",assigned:"Son",priority:"medium",done:false}
+  ],
+  goals:{
+    day30:[{text:"Post 3–4 videos per week consistently",done:false},{text:"Generate 3 Amazon sales (keeps account active)",done:false},{text:"Get 500+ views on at least 1 organic post",done:false},{text:"Register all social accounts in Associates dashboard",done:false}],
+    day60:[{text:"Identify best-converting products from Associates dashboard",done:false},{text:"Boost 1 Spark Ad at $20/day for 7 days",done:false},{text:"Add Biodance Collagen Mask + Cable Clips to rotation",done:false},{text:"Publish first roundup: WFH desk + skincare",done:false}],
+    day90:[{text:"Introduce Dyson Airwrap or REVLON dupe content",done:false},{text:"Launch Pinterest paid campaign ($5–10/day)",done:false},{text:"Build seasonal gift guide (bridges both niches)",done:false},{text:"Start email list on Mailchimp free tier",done:false}]
+  },
+  scripts:[
+    {id:1,week:1,day:"Monday",product:"Monitor Stand Riser",niche:"Office",content:"[HOOK — 0:00–0:05]\nIf your desk looks like this... keep watching.\n\n[PROBLEM — 0:05–0:15]\nWorking from home is hard enough without staring at a messy desk every single day. No organization, no space, no motivation — and honestly? It was affecting my whole mood before I even started work.\n\n[SOLUTION — 0:15–0:40]\nI found this monitor stand riser on Amazon and it completely changed my setup. It lifts my screen to eye level — so no more neck pain — and underneath there's actual storage space for my pens, notebooks, and charger. The whole desk feels bigger, cleaner, and way more professional. And the best part? It was under fifty dollars.\n\n[CTA — 0:40–0:50]\nLink is in my bio — I only share things I actually use and love. Grab it before the price changes.\n\n#ad — As an Amazon Associate I earn from qualifying purchases."},
+    {id:2,week:1,day:"Wednesday",product:"Mighty Patch",niche:"Beauty",content:"[HOOK — 0:00–0:05]\nI put this on before bed. Look what happened by morning.\n\n[PROBLEM — 0:05–0:15]\nOkay so I have been dealing with hormonal breakouts forever, and every time a new one shows up I either pick at it — which I know, I know — or I spend way too much money on products that do nothing.\n\n[SOLUTION — 0:15–0:40]\nThese are Mighty Patch hydrocolloid acne patches by Hero Cosmetics. You stick one on a blemish before you go to sleep — and overnight it literally pulls everything out. No popping, no scarring, no touching it at all. By morning it is visibly flatter, less red, and I did absolutely nothing except sleep. They are under twenty dollars on Amazon.\n\n[CTA — 0:40–0:50]\nLink is in my bio. Get them. Thank me tomorrow morning.\n\n#ad — As an Amazon Associate I earn from qualifying purchases."},
+    {id:3,week:1,day:"Friday",product:"Korean Toner Pads + The Ordinary",niche:"Beauty",content:"[HOOK — 0:00–0:05]\nMy skincare routine as a mom is literally four minutes. Here it is.\n\n[PROBLEM — 0:05–0:15]\nNobody tells you that when you become a mom your whole self-care routine just... disappears. There is no time. There is no energy. And your skin knows it.\n\n[SOLUTION — 0:15–0:40]\nSo I stripped everything down to what actually moves the needle. I use a Korean toner pad — just swipe it across my face, done — and then I add two drops of The Ordinary Niacinamide for my pores and uneven skin tone. That is it. Both are on Amazon. Both are under thirty dollars.\n\n[CTA — 0:40–0:50]\nBoth links are in my bio. You deserve four good minutes for yourself.\n\n#ad — As an Amazon Associate I earn from qualifying purchases."},
+    {id:4,week:1,day:"Saturday",product:"Amazon Haul — 4 Items",niche:"Both",content:"[HOOK — 0:00–0:05]\nFour things I bought on Amazon this month that I will never stop reordering.\n\n[0:05–0:10]\nI spend a lot of time on Amazon, so you don't have to.\n\n[PRODUCTS — 0:10–0:42]\nNumber one: this monitor stand riser. Under fifty dollars, gives you storage underneath, lifts your screen so your neck stops hurting.\nNumber two: Mighty Patch acne patches. Stick one on at night. Flat by morning.\nNumber three: The Ordinary Niacinamide serum. Nine dollars. Shrinks pores and evens out skin tone.\nNumber four: cable management clips. Getting the cords off my desk made me feel like a completely different person.\n\n[CTA — 0:42–0:55]\nEvery single link is in my bio organized by category. All four together cost less than a hundred dollars. Go.\n\n#ad — As an Amazon Associate I earn from qualifying purchases."}
+  ],
+  notes:"",
+  lastUpdated:new Date().toLocaleDateString()
+};
+
+const badge=(label,col)=>(
+  <span style={{background:col+"22",color:col,border:`1px solid ${col}44`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,display:"inline-block",whiteSpace:"nowrap"}}>{label}</span>
+);
+const Prog=({pct,col})=>(
+  <div style={{background:"#0C0820",borderRadius:99,height:6,overflow:"hidden"}}>
+    <div style={{width:`${Math.min(100,pct)}%`,height:"100%",background:col||G,borderRadius:99,transition:"width 0.5s"}}/>
+  </div>
+);
+
+export default function App(){
+  const [tab,setTab]=useState("dashboard");
+  const [data,setData]=useState(DEFAULT);
+  const [loaded,setLoaded]=useState(false);
+  const [selScript,setSelScript]=useState(null);
+  const [editKpi,setEditKpi]=useState(false);
+  const [aiMsg,setAiMsg]=useState("");
+  const [aiResp,setAiResp]=useState("");
+  const [aiLoad,setAiLoad]=useState(false);
+  const [impText,setImpText]=useState("");
+  const [impSt,setImpSt]=useState("");
+  const [newTask,setNewTask]=useState({text:"",assigned:"Dad",priority:"high"});
+  const [newProd,setNewProd]=useState({name:"",cat:"Office",rate:4,price:"",notes:""});
+  const [addProd,setAddProd]=useState(false);
+  const [tfilt,setTfilt]=useState("All");
+
+  useEffect(()=>{
+    (async()=>{
+      try{const r=await window.storage.get("salo-v4");if(r?.value)setData(JSON.parse(r.value));}catch{}
+      setLoaded(true);
+    })();
+  },[]);
+  useEffect(()=>{
+    if(!loaded)return;
+    window.storage.set("salo-v4",JSON.stringify({...data,lastUpdated:new Date().toLocaleDateString()})).catch(()=>{});
+  },[data,loaded]);
+
+  const upd=(k,v)=>setData(d=>({...d,[k]:v,lastUpdated:new Date().toLocaleDateString()}));
+
+  const askClaude=async()=>{
+    if(!aiMsg.trim())return;
+    setAiLoad(true);setAiResp("");
+    const sys=`You are the business assistant for Salo's Virtual Solutions — a family Amazon affiliate marketing business. Team: Dad (CEO), Son (Content), Sandra/Wife (Products). Niches: Office & Beauty. Active products: ${data.products.filter(p=>p.status==="active").map(p=>p.name).join(", ")}. Followers: ${data.kpis.followers}. Phase ${data.kpis.phase} of 90-day roadmap. Be concise, practical, action-oriented.`;
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:[{role:"user",content:aiMsg}]})});
+      const d=await res.json();setAiResp(d.content?.[0]?.text||"No response.");
+    }catch{setAiResp("Connection error — please try again.");}
+    setAiLoad(false);
+  };
+
+  const importCtx=()=>{
+    if(!impText.trim())return;
+    const fm=impText.match(/~?([\d,]+)\s*followers/i);
+    upd("kpis",{...data.kpis,followers:fm?parseInt(fm[1].replace(/,/g,"")):data.kpis.followers});
+    upd("notes",(data.notes?data.notes+"\n\n---\n\n":"")+impText.slice(0,600)+"...");
+    setImpSt("✅ Context imported!");setTimeout(()=>setImpSt(""),3000);
+  };
+  const exportBrief=()=>{
+    const b=`# Salo's Virtual Solutions — Business Brief\nGenerated: ${new Date().toLocaleDateString()}\n\n## KPIs\n- Followers: ${data.kpis.followers} / ${data.kpis.followerGoal} goal\n- Amazon Sales: ${data.kpis.sales}\n- Commissions: $${Number(data.kpis.commissions).toFixed(2)}\n- Phase: ${data.kpis.phase}\n\n## Active Products\n${data.products.filter(p=>p.status==="active").map(p=>`- ${p.name} | ${p.rate}% | ${p.price}`).join("\n")}\n\n## Pending Tasks\n${data.tasks.filter(t=>!t.done).map(t=>`- [${t.assigned}] ${t.text}`).join("\n")}\n\n## Team Notes\n${data.notes||"(none)"}`;
+    navigator.clipboard.writeText(b).then(()=>{setImpSt("📋 Brief copied! Paste into Claude.");setTimeout(()=>setImpSt(""),3000);});
+  };
+
+  const css={
+    wrap:{display:"flex",height:"100vh",background:BG,color:TX,fontFamily:"-apple-system,'Inter',sans-serif",overflow:"hidden",fontSize:14},
+    side:{width:210,background:"#0F0A24",borderRight:`1px solid ${BD}`,display:"flex",flexDirection:"column",flexShrink:0},
+    main:{flex:1,overflow:"auto",padding:"28px 32px"},
+    card:{background:CD,border:`1px solid ${BD}`,borderRadius:16,padding:20,marginBottom:16},
+    btn:{background:G,border:"none",borderRadius:10,padding:"9px 18px",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:13},
+    btnSm:{background:G,border:"none",borderRadius:8,padding:"5px 12px",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12},
+    btnGh:{background:"transparent",border:`1px solid ${BD}`,borderRadius:8,padding:"5px 12px",color:MT,cursor:"pointer",fontSize:12},
+    btnDanger:{background:"transparent",border:"1px solid #F8717144",borderRadius:8,padding:"5px 10px",color:"#F87171",cursor:"pointer",fontSize:12},
+    inp:{background:BG,border:`1px solid ${BD}`,borderRadius:8,padding:"7px 11px",color:TX,fontSize:13,outline:"none",width:"100%",boxSizing:"border-box"},
+    inpSm:{background:BG,border:`1px solid ${BD}`,borderRadius:6,padding:"5px 9px",color:TX,fontSize:12,outline:"none",width:"100%",boxSizing:"border-box"},
+    ta:{background:BG,border:`1px solid ${BD}`,borderRadius:8,padding:12,color:TX,fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",resize:"vertical",fontFamily:"inherit",lineHeight:1.6},
+    lbl:{fontSize:11,color:MT,textTransform:"uppercase",letterSpacing:"0.8px",marginBottom:5,display:"block"},
+    h1:{fontSize:22,fontWeight:800,marginBottom:4},
+    h2:{fontSize:16,fontWeight:700,marginBottom:14},
+    g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14},
+    g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14},
+    g4:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:14},
+  };
+
+  const nav=[
+    {id:"dashboard",icon:"🏠",label:"Dashboard"},
+    {id:"team",icon:"👥",label:"Team Hub"},
+    {id:"calendar",icon:"📅",label:"Calendar"},
+    {id:"products",icon:"📦",label:"Products"},
+    {id:"tasks",icon:"✅",label:"Tasks"},
+    {id:"goals",icon:"🎯",label:"90-Day Goals"},
+    {id:"scripts",icon:"📝",label:"Scripts"},
+    {id:"ai",icon:"🤖",label:"AI Assistant"},
+    {id:"import",icon:"🔄",label:"Import / Export"}
+  ];
+
+  // ── DASHBOARD ──
+  const Dashboard=()=>{
+    const done=data.tasks.filter(t=>t.done).length;
+    const fpct=Math.round(data.kpis.followers/data.kpis.followerGoal*100);
+    const spct=Math.min(100,Math.round(data.kpis.sales/3*100));
+    const tpct=Math.round(done/data.tasks.length*100);
+    return(
+      <div>
+        <h1 style={{...css.h1,...GT}}>✨ Salo's Virtual Solutions</h1>
+        <p style={{color:MT,marginBottom:28}}>Family Business Hub · {data.lastUpdated}</p>
+        <div style={css.g4}>
+          {[
+            {icon:"👥",val:data.kpis.followers.toLocaleString(),lbl:"Followers",sub:`Goal: ${data.kpis.followerGoal.toLocaleString()}`,pct:fpct,col:PK},
+            {icon:"🛒",val:data.kpis.sales,lbl:"Amazon Sales",sub:"Need 3 to stay active",pct:spct,col:PU},
+            {icon:"💰",val:`$${Number(data.kpis.commissions).toFixed(2)}`,lbl:"Commissions",sub:"Month to date",pct:null,col:GO},
+            {icon:"✅",val:`${done}/${data.tasks.length}`,lbl:"Tasks Done",sub:`${tpct}% complete`,pct:tpct,col:"#4ADE80"}
+          ].map((k,i)=>(
+            <div key={i} style={{background:CD,border:`1px solid ${BD}`,borderRadius:16,padding:"18px 20px"}}>
+              <div style={{fontSize:22,marginBottom:8}}>{k.icon}</div>
+              <div style={{fontSize:26,fontWeight:900,...GT}}>{k.val}</div>
+              <div style={{fontWeight:700,marginBottom:2,fontSize:13}}>{k.lbl}</div>
+              <div style={{fontSize:11,color:MT,marginBottom:k.pct!==null?10:0}}>{k.sub}</div>
+              {k.pct!==null&&<Prog pct={k.pct} col={k.col}/>}
+            </div>
+          ))}
+        </div>
+        {editKpi&&(
+          <div style={{...css.card,marginTop:16}}>
+            <p style={{fontWeight:700,marginBottom:12}}>Update KPIs</p>
+            <div style={css.g3}>
+              {[["Followers","followers"],["Sales","sales"],["Commissions ($)","commissions"],["Phase (1–3)","phase"]].map(([l,k])=>(
+                <div key={k}><label style={css.lbl}>{l}</label>
+                  <input style={css.inp} type="number" value={data.kpis[k]} onChange={e=>upd("kpis",{...data.kpis,[k]:Number(e.target.value)})}/></div>
+              ))}
+            </div>
+          </div>
+        )}
+        <button style={{...css.btnSm,marginTop:16,marginBottom:24,background:editKpi?"#251545":G,border:editKpi?`1px solid ${BD}`:"none"}} onClick={()=>setEditKpi(!editKpi)}>
+          {editKpi?"✓ Done":"✏️ Update KPIs"}
+        </button>
+        <div style={{...css.card,marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <div style={{flex:1}}>
+              <p style={{fontWeight:700,marginBottom:6}}>📍 Current Phase</p>
+              {badge(["","Phase 1 — Days 1–30: Build Proof","Phase 2 — Days 31–60: Double Down","Phase 3 — Days 61–90: High Ticket"][data.kpis.phase],PK)}
+            </div>
+            <div style={{textAlign:"right",fontSize:12,color:MT,lineHeight:1.8}}>
+              <div>Best posting: 6–8am · 12–1pm · 8–10pm</div>
+              <div>Amazon pays 60 days after month earned</div>
+            </div>
+          </div>
+        </div>
+        <div style={css.card}>
+          <p style={css.h2}>📅 This Week</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {data.calendar.map((c,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:BG,borderRadius:10}}>
+                <span style={{width:95,fontWeight:700,color:PK}}>{c.day}</span>
+                <span style={{flex:1}}>{c.type}</span>
+                {badge(c.niche,c.niche==="Office"?"#60A5FA":c.niche==="Both"?GO:PK)}
+                <span style={{fontSize:12,color:MT,minWidth:40}}>{c.assigned}</span>
+                {badge(c.status,c.status==="done"?"#4ADE80":c.status==="in-progress"?GO:MT)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── TEAM HUB (fully editable) ──
+  const Team=()=>{
+    const [editing,setEditing]=useState(null); // member id being edited
+    const [draft,setDraft]=useState(null);     // draft copy of that member
+    const [newResp,setNewResp]=useState("");
+
+    const startEdit=m=>{setEditing(m.id);setDraft({...m,resp:[...m.resp]});setNewResp("");};
+    const cancelEdit=()=>{setEditing(null);setDraft(null);setNewResp("");};
+
+    const saveEdit=()=>{
+      upd("team",data.team.map(m=>m.id===editing?{...draft}:m));
+      setEditing(null);setDraft(null);setNewResp("");
+    };
+
+    const updDraft=(field,val)=>setDraft(d=>({...d,[field]:val}));
+    const updResp=(i,val)=>setDraft(d=>({...d,resp:d.resp.map((r,j)=>j===i?val:r)}));
+    const delResp=i=>setDraft(d=>({...d,resp:d.resp.filter((_,j)=>j!==i)}));
+    const addResp=()=>{
+      if(!newResp.trim())return;
+      setDraft(d=>({...d,resp:[...d.resp,newResp.trim()]}));
+      setNewResp("");
+    };
+
+    return(
+      <div>
+        <h1 style={{...css.h1,...GT,marginBottom:6}}>👥 Team Hub</h1>
+        <p style={{color:MT,marginBottom:24,fontSize:13}}>Click ✏️ Edit on any card to update roles and responsibilities</p>
+        <div style={{display:"flex",flexDirection:"column",gap:20}}>
+          {data.team.map((m,i)=>{
+            const isEd=editing===m.id;
+            const d=isEd?draft:m;
+            return(
+              <div key={m.id} style={{...css.card,borderLeft:`4px solid ${m.color}`}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+                  <div style={{fontSize:36}}>{m.emoji}</div>
+                  <div style={{flex:1}}>
+                    {isEd?(
+                      <div style={{display:"flex",gap:8,marginBottom:6}}>
+                        <input style={{...css.inp,fontWeight:800,fontSize:16,flex:1}} value={d.name} onChange={e=>updDraft("name",e.target.value)} placeholder="Name"/>
+                        <input style={{...css.inp,fontSize:13,flex:2}} value={d.title} onChange={e=>updDraft("title",e.target.value)} placeholder="Title"/>
+                      </div>
+                    ):(
+                      <>
+                        <div style={{fontSize:17,fontWeight:800}}>{m.name}</div>
+                        <div style={{marginTop:4}}>{badge(m.title,m.color)}</div>
+                      </>
+                    )}
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    {isEd?(
+                      <>
+                        <button onClick={saveEdit} style={{...css.btnSm}}>✓ Save</button>
+                        <button onClick={cancelEdit} style={{...css.btnGh}}>Cancel</button>
+                      </>
+                    ):(
+                      <button onClick={()=>startEdit(m)} style={{...css.btnGh}}>✏️ Edit</button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Responsibilities */}
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {(isEd?draft.resp:m.resp).map((r,j)=>(
+                    <div key={j} style={{display:"flex",gap:8,alignItems:"center",padding:"7px 12px",background:BG,borderRadius:8}}>
+                      <span style={{color:m.color,flexShrink:0,fontSize:12}}>▸</span>
+                      {isEd?(
+                        <>
+                          <input style={{...css.inpSm,flex:1,background:"transparent",border:"none",borderBottom:`1px solid ${BD}`,borderRadius:0,padding:"2px 4px"}}
+                            value={r} onChange={e=>updResp(j,e.target.value)}/>
+                          <button onClick={()=>delResp(j)} style={{background:"none",border:"none",color:"#F87171",cursor:"pointer",fontSize:14,flexShrink:0}}>✕</button>
+                        </>
+                      ):(
+                        <span style={{fontSize:13,flex:1}}>{r}</span>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add new responsibility row */}
+                  {isEd&&(
+                    <div style={{display:"flex",gap:8,marginTop:4}}>
+                      <input style={{...css.inpSm,flex:1}} placeholder="Add new responsibility..."
+                        value={newResp} onChange={e=>setNewResp(e.target.value)}
+                        onKeyDown={e=>e.key==="Enter"&&addResp()}/>
+                      <button onClick={addResp} style={{...css.btnSm,flexShrink:0}}>+ Add</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // ── CALENDAR ──
+  const Calendar=()=>{
+    const cycle=i=>{
+      const sts=["pending","in-progress","done"];
+      const nxt=sts[(sts.indexOf(data.calendar[i].status)+1)%3];
+      const cal=[...data.calendar];cal[i]={...cal[i],status:nxt};upd("calendar",cal);
+    };
+    return(
+      <div>
+        <h1 style={{...css.h1,...GT,marginBottom:6}}>📅 Content Calendar</h1>
+        <p style={{color:MT,marginBottom:24,fontSize:13}}>Tap status pill to cycle: pending → in-progress → done</p>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {data.calendar.map((c,i)=>(
+            <div key={i} style={{...css.card,display:"flex",alignItems:"center",gap:14,marginBottom:0}}>
+              <div style={{width:105,fontWeight:800,fontSize:15,color:PK}}>{c.day}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600}}>{c.type}</div>
+                <div style={{fontSize:12,color:MT}}>Assigned: {c.assigned}</div>
+              </div>
+              {badge(c.niche,c.niche==="Office"?"#60A5FA":c.niche==="Both"?GO:PK)}
+              <button onClick={()=>cycle(i)} style={{...css.btnGh,fontWeight:700,color:c.status==="done"?"#4ADE80":c.status==="in-progress"?GO:MT,borderColor:c.status==="done"?"#4ADE8044":c.status==="in-progress"?GO+"44":BD}}>
+                {c.status==="done"?"✅ Done":c.status==="in-progress"?"⏳ In Progress":"⏸ Pending"}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div style={{...css.card,marginTop:16}}>
+          <p style={{fontWeight:700,marginBottom:12}}>⏰ Best Posting Times</p>
+          <div style={css.g3}>
+            {[["6–8am","Morning moms before work"],["12–1pm","Lunch break browsers"],["8–10pm","After kids' bedtime"]].map(([t,s])=>(
+              <div key={t} style={{background:BG,borderRadius:10,padding:"14px 16px",textAlign:"center"}}>
+                <div style={{fontSize:18,marginBottom:6}}>⏰</div>
+                <div style={{fontWeight:800,...GT,fontSize:15}}>{t}</div>
+                <div style={{fontSize:11,color:MT,marginTop:4}}>{s}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── PRODUCTS (fully editable) ──
+  const Products=()=>{
+    const [editId,setEditId]=useState(null);
+    const [draft,setDraft]=useState(null);
+
+    const startEdit=p=>{setEditId(p.id);setDraft({...p});};
+    const cancelEdit=()=>{setEditId(null);setDraft(null);};
+    const saveEdit=()=>{
+      upd("products",data.products.map(p=>p.id===editId?{...draft}:p));
+      setEditId(null);setDraft(null);
+    };
+    const ud=(f,v)=>setDraft(d=>({...d,[f]:v}));
+
+    return(
+      <div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+          <div>
+            <h1 style={{...css.h1,...GT}}>📦 Products Tracker</h1>
+            <p style={{color:MT,fontSize:13,marginTop:2}}>Click ✏️ on any product to edit its details</p>
+          </div>
+          <button style={css.btn} onClick={()=>setAddProd(!addProd)}>{addProd?"✕ Cancel":"+ Add Product"}</button>
+        </div>
+
+        {addProd&&(
+          <div style={{...css.card,marginBottom:20,border:`1px solid ${PK}44`}}>
+            <p style={{fontWeight:700,marginBottom:14}}>New Product</p>
+            <div style={css.g2}>
+              <div><label style={css.lbl}>Product Name</label>
+                <input style={css.inp} value={newProd.name} onChange={e=>setNewProd(p=>({...p,name:e.target.value}))}/></div>
+              <div><label style={css.lbl}>Category</label>
+                <select style={css.inp} value={newProd.cat} onChange={e=>setNewProd(p=>({...p,cat:e.target.value}))}>
+                  <option>Luxury Beauty</option><option>Standard Beauty</option><option>Office</option>
+                </select></div>
+              <div><label style={css.lbl}>Commission %</label>
+                <input style={css.inp} type="number" value={newProd.rate} onChange={e=>setNewProd(p=>({...p,rate:Number(e.target.value)}))}/></div>
+              <div><label style={css.lbl}>Price Range</label>
+                <input style={css.inp} value={newProd.price} onChange={e=>setNewProd(p=>({...p,price:e.target.value}))}/></div>
+            </div>
+            <div style={{marginTop:10}}><label style={css.lbl}>Notes</label>
+              <input style={css.inp} value={newProd.notes} onChange={e=>setNewProd(p=>({...p,notes:e.target.value}))}/></div>
+            <button style={{...css.btn,marginTop:14}} onClick={()=>{
+              if(!newProd.name.trim())return;
+              upd("products",[...data.products,{...newProd,id:Date.now(),status:"researching"}]);
+              setNewProd({name:"",cat:"Office",rate:4,price:"",notes:""});setAddProd(false);
+            }}>Add Product</button>
+          </div>
+        )}
+
+        {["active","researching"].map(st=>(
+          <div key={st} style={{marginBottom:28}}>
+            <p style={{fontWeight:700,fontSize:14,color:st==="active"?"#4ADE80":GO,marginBottom:12}}>
+              {st==="active"?"✅ Active Products":"🔍 Researching"}
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {data.products.filter(p=>p.status===st).map(p=>{
+                const isEd=editId===p.id;
+                return(
+                  <div key={p.id} style={{...css.card,marginBottom:0,border:`1px solid ${isEd?PK+"66":BD}`}}>
+                    {isEd?(
+                      /* ── EDIT MODE ── */
+                      <div>
+                        <div style={css.g2}>
+                          <div style={{gridColumn:"1/-1"}}>
+                            <label style={css.lbl}>Product Name</label>
+                            <input style={css.inp} value={draft.name} onChange={e=>ud("name",e.target.value)}/>
+                          </div>
+                          <div>
+                            <label style={css.lbl}>Category</label>
+                            <select style={css.inp} value={draft.cat} onChange={e=>ud("cat",e.target.value)}>
+                              <option>Luxury Beauty</option><option>Standard Beauty</option><option>Office</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={css.lbl}>Status</label>
+                            <select style={css.inp} value={draft.status} onChange={e=>ud("status",e.target.value)}>
+                              <option value="active">Active</option><option value="researching">Researching</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={css.lbl}>Commission %</label>
+                            <input style={css.inp} type="number" value={draft.rate} onChange={e=>ud("rate",Number(e.target.value))}/>
+                          </div>
+                          <div>
+                            <label style={css.lbl}>Price Range</label>
+                            <input style={css.inp} value={draft.price} onChange={e=>ud("price",e.target.value)}/>
+                          </div>
+                          <div style={{gridColumn:"1/-1"}}>
+                            <label style={css.lbl}>Notes</label>
+                            <input style={css.inp} value={draft.notes} onChange={e=>ud("notes",e.target.value)}/>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:8,marginTop:14}}>
+                          <button onClick={saveEdit} style={css.btnSm}>✓ Save Changes</button>
+                          <button onClick={cancelEdit} style={css.btnGh}>Cancel</button>
+                          <button onClick={()=>{upd("products",data.products.filter(x=>x.id!==p.id));cancelEdit();}} style={{...css.btnDanger,marginLeft:"auto"}}>Delete Product</button>
+                        </div>
+                      </div>
+                    ):(
+                      /* ── VIEW MODE ── */
+                      <div style={{display:"flex",alignItems:"center",gap:14}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700}}>{p.name}</div>
+                          <div style={{fontSize:12,color:MT,marginTop:2}}>{p.notes}</div>
+                        </div>
+                        {badge(p.cat,p.cat.includes("Luxury")?GO:p.cat==="Office"?"#60A5FA":PK)}
+                        <div style={{textAlign:"center",minWidth:55}}>
+                          <div style={{fontWeight:900,fontSize:18,...GT}}>{p.rate}%</div>
+                          <div style={{fontSize:10,color:MT}}>commission</div>
+                        </div>
+                        <div style={{fontSize:12,color:MT,minWidth:70,textAlign:"right"}}>{p.price}</div>
+                        <button onClick={()=>startEdit(p)} style={css.btnGh}>✏️ Edit</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {data.products.filter(p=>p.status===st).length===0&&(
+                <p style={{color:MT,fontSize:13,padding:"12px 0"}}>No products in this category yet.</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ── TASKS ──
+  const Tasks=()=>{
+    const filt=tfilt==="All"?data.tasks:data.tasks.filter(t=>t.assigned===tfilt);
+    return(
+      <div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <h1 style={{...css.h1,...GT}}>✅ Tasks</h1>
+          <div style={{display:"flex",gap:6}}>
+            {["All","Dad","Son","Wife"].map(m=>(
+              <button key={m} onClick={()=>setTfilt(m)} style={{...css.btnGh,background:tfilt===m?G:"transparent",color:tfilt===m?"#fff":MT,border:tfilt===m?"none":`1px solid ${BD}`}}>{m}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{...css.card,marginBottom:18}}>
+          <p style={{fontWeight:700,marginBottom:12}}>+ New Task</p>
+          <div style={{display:"flex",gap:8}}>
+            <input style={{...css.inp,flex:3}} placeholder="Task description..." value={newTask.text} onChange={e=>setNewTask(t=>({...t,text:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter"&&newTask.text.trim()){upd("tasks",[...data.tasks,{...newTask,id:Date.now(),done:false}]);setNewTask({text:"",assigned:"Dad",priority:"high"});}}}/>
+            <select style={{...css.inp,flex:1}} value={newTask.assigned} onChange={e=>setNewTask(t=>({...t,assigned:e.target.value}))}>
+              <option>Dad</option><option>Son</option><option>Wife</option>
+            </select>
+            <select style={{...css.inp,flex:1}} value={newTask.priority} onChange={e=>setNewTask(t=>({...t,priority:e.target.value}))}>
+              <option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+            </select>
+            <button style={css.btn} onClick={()=>{if(!newTask.text.trim())return;upd("tasks",[...data.tasks,{...newTask,id:Date.now(),done:false}]);setNewTask({text:"",assigned:"Dad",priority:"high"});}}>Add</button>
+          </div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          {filt.map(t=>(
+            <div key={t.id} style={{...css.card,display:"flex",alignItems:"center",gap:12,marginBottom:0,opacity:t.done?0.5:1}}>
+              <input type="checkbox" checked={t.done} onChange={()=>upd("tasks",data.tasks.map(x=>x.id===t.id?{...x,done:!x.done}:x))} style={{width:17,height:17,cursor:"pointer",accentColor:PK}}/>
+              <span style={{flex:1,textDecoration:t.done?"line-through":"none",fontSize:13}}>{t.text}</span>
+              {badge(t.assigned,t.assigned==="Dad"?PK:t.assigned==="Son"?PU:GO)}
+              {badge(t.priority,t.priority==="high"?"#F87171":t.priority==="medium"?GO:MT)}
+              <button onClick={()=>upd("tasks",data.tasks.filter(x=>x.id!==t.id))} style={{background:"none",border:"none",color:"#F87171",cursor:"pointer",fontSize:15}}>✕</button>
+            </div>
+          ))}
+          {filt.length===0&&<p style={{color:MT,textAlign:"center",padding:"32px 0"}}>No tasks — all caught up! 🎉</p>}
+        </div>
+      </div>
+    );
+  };
+
+  // ── GOALS ──
+  const Goals=()=>{
+    const phases=[
+      {key:"day30",label:"Phase 1 — Days 1–30",sub:"Build Proof (Zero Paid)",col:PK},
+      {key:"day60",label:"Phase 2 — Days 31–60",sub:"Double Down on Winners",col:PU},
+      {key:"day90",label:"Phase 3 — Days 61–90",sub:"Add High-Ticket Layer",col:GO}
+    ];
+    return(
+      <div>
+        <h1 style={{...css.h1,...GT,marginBottom:24}}>🎯 90-Day Goals</h1>
+        {phases.map(p=>{
+          const items=data.goals[p.key];
+          const dn=items.filter(i=>i.done).length;
+          return(
+            <div key={p.key} style={{...css.card,borderLeft:`4px solid ${p.col}`}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <div><div style={{fontWeight:800,fontSize:15}}>{p.label}</div>
+                  <div style={{color:MT,fontSize:12}}>{p.sub}</div></div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontWeight:900,fontSize:20,color:p.col}}>{dn}/{items.length}</div>
+                  <div style={{fontSize:11,color:MT}}>completed</div>
+                </div>
+              </div>
+              <div style={{marginBottom:14}}><Prog pct={Math.round(dn/items.length*100)} col={p.col}/></div>
+              <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                {items.map((item,j)=>(
+                  <div key={j} style={{display:"flex",gap:12,alignItems:"center",padding:"8px 12px",background:BG,borderRadius:8}}>
+                    <input type="checkbox" checked={item.done} onChange={()=>{const g={...data.goals};g[p.key]=items.map((x,k)=>k===j?{...x,done:!x.done}:x);upd("goals",g);}} style={{accentColor:p.col,width:16,height:16,cursor:"pointer"}}/>
+                    <span style={{fontSize:13,textDecoration:item.done?"line-through":"none",color:item.done?MT:TX}}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ── SCRIPTS ──
+  const Scripts=()=>(
+    <div>
+      <h1 style={{...css.h1,...GT,marginBottom:24}}>📝 Scripts Library</h1>
+      <div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:20,height:"calc(100vh - 180px)"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8,overflowY:"auto"}}>
+          {data.scripts.map(sc=>(
+            <div key={sc.id} onClick={()=>setSelScript(sc)} style={{...css.card,cursor:"pointer",marginBottom:0,borderLeft:`3px solid ${selScript?.id===sc.id?PK:BD}`,opacity:selScript?.id===sc.id?1:0.65}}>
+              <div style={{fontWeight:700,fontSize:13}}>Week {sc.week} · {sc.day}</div>
+              <div style={{fontSize:11,color:MT,margin:"4px 0"}}>{sc.product}</div>
+              {badge(sc.niche,sc.niche==="Office"?"#60A5FA":sc.niche==="Both"?GO:PK)}
+            </div>
+          ))}
+        </div>
+        <div style={{...css.card,overflowY:"auto"}}>
+          {selScript?(
+            <>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                <div>
+                  <div style={{fontWeight:800,fontSize:16}}>{selScript.product}</div>
+                  <div style={{color:MT,fontSize:12,marginTop:3}}>Week {selScript.week} · {selScript.day} · {selScript.niche}</div>
+                </div>
+                <button style={css.btnSm} onClick={()=>navigator.clipboard.writeText(selScript.content)}>📋 Copy Script</button>
+              </div>
+              <pre style={{whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.75,fontFamily:"inherit",color:TX}}>{selScript.content}</pre>
+            </>
+          ):(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:MT}}>← Select a script to view</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── AI ASSISTANT ──
+  const AI=()=>(
+    <div>
+      <h1 style={{...css.h1,...GT,marginBottom:6}}>🤖 AI Assistant</h1>
+      <p style={{color:MT,marginBottom:24,fontSize:13}}>Powered by Claude · Pre-loaded with your business context</p>
+      <div style={css.g2}>
+        {["Write Week 2 scripts for Biodance Bio-Collagen Sheet Masks","Write Week 2 office script for Ergonomic Laptop Stand","What's the fastest path to our first 3 Amazon sales?","Write a Friday Mom Life post for The Ordinary Niacinamide"].map(q=>(
+          <div key={q} onClick={()=>setAiMsg(q)} style={{...css.card,cursor:"pointer",fontSize:13,marginBottom:0,borderColor:aiMsg===q?PK:BD}}>✨ {q}</div>
+        ))}
+      </div>
+      <div style={{...css.card,marginTop:16}}>
+        <label style={css.lbl}>Your Question</label>
+        <textarea style={{...css.ta,minHeight:72,marginBottom:12}} value={aiMsg} onChange={e=>setAiMsg(e.target.value)} placeholder="Ask Claude anything about your business..."/>
+        <button style={{...css.btn,opacity:aiLoad?0.7:1}} onClick={askClaude} disabled={aiLoad}>{aiLoad?"⏳ Thinking...":"✨ Ask Claude"}</button>
+        {aiResp&&(
+          <div style={{marginTop:18,padding:16,background:BG,borderRadius:12,border:`1px solid ${BD}`}}>
+            <div style={{marginBottom:10}}>{badge("Claude's Response",PU)}</div>
+            <pre style={{whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.75,fontFamily:"inherit"}}>{aiResp}</pre>
+            <button style={{...css.btnSm,marginTop:12}} onClick={()=>navigator.clipboard.writeText(aiResp)}>📋 Copy</button>
+          </div>
+        )}
+      </div>
+      <div style={{...css.card,marginTop:16}}>
+        <p style={{fontWeight:700,marginBottom:6}}>📝 Team Notes</p>
+        <p style={{color:MT,fontSize:12,marginBottom:10}}>Write updates, wins, or blockers — exported in your Claude brief</p>
+        <textarea style={{...css.ta,minHeight:100}} value={data.notes} onChange={e=>upd("notes",e.target.value)} placeholder="This week: Monday video got 450 views. Son noticed lots of questions about desk chairs — worth researching?"/>
+      </div>
+    </div>
+  );
+
+  // ── IMPORT / EXPORT ──
+  const ImportExport=()=>(
+    <div>
+      <h1 style={{...css.h1,...GT,marginBottom:24}}>🔄 Import / Export</h1>
+      <div style={css.g2}>
+        <div>
+          <div style={css.card}>
+            <p style={css.h2}>📥 Import from Claude Project</p>
+            <p style={{color:MT,fontSize:13,marginBottom:14}}>Paste your Claude context file or business update. The app will read and sync your data.</p>
+            <textarea style={{...css.ta,minHeight:200,marginBottom:12}} value={impText} onChange={e=>setImpText(e.target.value)} placeholder="Paste your FAMILY_AFFILIATE_CO_CONTEXT.md content here..."/>
+            <button style={css.btn} onClick={importCtx}>📥 Import & Sync</button>
+          </div>
+        </div>
+        <div>
+          <div style={css.card}>
+            <p style={css.h2}>📤 Export Brief for Claude</p>
+            <p style={{color:MT,fontSize:13,marginBottom:14}}>Generate a clean brief to paste into any Claude conversation or Project.</p>
+            <div style={{padding:14,background:BG,borderRadius:10,marginBottom:14,fontSize:12,color:MT,lineHeight:1.8}}>
+              <strong style={{color:TX}}>Brief includes:</strong><br/>
+              ✓ Current KPIs & phase<br/>✓ Active products + rates<br/>✓ Pending tasks by person<br/>✓ Calendar status<br/>✓ Team notes
+            </div>
+            <button style={css.btn} onClick={exportBrief}>📋 Generate & Copy Brief</button>
+          </div>
+          {impSt&&<div style={{...css.card,fontSize:13,textAlign:"center"}}>{impSt}</div>}
+          <div style={{...css.card,marginTop:0}}>
+            <p style={{fontWeight:700,marginBottom:10}}>💡 Workflow</p>
+            <div style={{fontSize:12,color:MT,lineHeight:1.9}}>
+              <strong style={{color:TX}}>Claude → App:</strong><br/>1. Open Claude.ai → your Project<br/>2. Copy the context file<br/>3. Paste above → click Import<br/><br/>
+              <strong style={{color:TX}}>App → Claude:</strong><br/>1. Click "Generate & Copy Brief"<br/>2. Open Claude.ai → new chat<br/>3. Paste brief → ask your question
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const views={dashboard:Dashboard,team:Team,calendar:Calendar,products:Products,tasks:Tasks,goals:Goals,scripts:Scripts,ai:AI,import:ImportExport};
+  const View=views[tab]||Dashboard;
+
+  if(!loaded)return(
+    <div style={{background:BG,height:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:TX,fontSize:18,fontFamily:"-apple-system,sans-serif"}}>
+      <span style={GT}>✨ Loading Salo's Hub...</span>
+    </div>
+  );
+
+  return(
+    <div style={css.wrap}>
+      <div style={css.side}>
+        <div style={{padding:"22px 16px 16px",borderBottom:`1px solid ${BD}`}}>
+          <div style={{...GT,fontSize:21,fontWeight:900,letterSpacing:-0.5}}>Salo's ✨</div>
+          <div style={{fontSize:10,color:MT,letterSpacing:"0.8px",marginTop:2}}>VIRTUAL SOLUTIONS</div>
+          <div style={{fontSize:10,color:"#5a4080",marginTop:2}}>Family Business Hub</div>
+        </div>
+        <nav style={{flex:1,padding:"10px 0",overflowY:"auto"}}>
+          {nav.map(n=>(
+            <div key={n.id} onClick={()=>setTab(n.id)} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 14px",margin:"2px 8px",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:tab===n.id?700:400,color:tab===n.id?TX:MT,background:tab===n.id?"rgba(232,64,154,0.15)":"transparent",borderLeft:tab===n.id?`3px solid ${PK}`:"3px solid transparent",transition:"all 0.12s"}}>
+              <span style={{fontSize:15}}>{n.icon}</span><span>{n.label}</span>
+            </div>
+          ))}
+        </nav>
+        <div style={{padding:14,borderTop:`1px solid ${BD}`,fontSize:10,color:"#5a4080",textAlign:"center",lineHeight:1.6}}>
+          salosdigitalmarketing.com<br/>
+          <span style={{...GT,fontWeight:700,fontSize:11}}>© 2026 Sandra Lorena</span>
+        </div>
+      </div>
+      <div style={css.main}><View/></div>
+    </div>
+  );
+}
